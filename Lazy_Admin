@@ -1,0 +1,72 @@
+Lazy Admin
+THM Writeup
+By Sovren
+
+Have some fun! There might be multiple ways to get user access.
+
+
+=============:\\\\\\\\
+RECONAISSANCE:-------->>
+=============:////////
+An initial Nmap scan was performed to identify exposed services:
+nmap -sC -sV -O -T4 -Pn 10.82.153.7 -p-
+Findings:
+22/tcp – OpenSSH 7.2p2 (Ubuntu)
+80/tcp – Apache 2.4.18 (Ubuntu)
+
+The web server displayed the default Apache page, suggesting further web enumeration was required.
+
+=============:\\\\\\\\\\
+ENUMERATION:------------->>
+=============://////////
+Directory enumeration revealed a CMS installation:
+gobuster dir -u http://10.82.153.7 -w /usr/share/wordlists/dirb/common.txt
+
+Key discovery:
+/content/ → SweetRice CMS
+Further enumeration of /content identified:
+/as/ – Admin login panel
+/inc/ – Contained a MySQL backup file
+/attachment/, /images/, /_themes/
+
+Inspecting SweetRice assets indicated an outdated version (≥ 0.5.4), known to contain vulnerabilities.
+
+=============:\\\\\\\\\\\\
+EXPLOITATION:--------------->>
+=============:////////////
+The /content/inc/ directory exposed a database backup containing credentials.
+Recovered credentials:
+Username: manager
+Password: Password123
+
+Using these credentials granted admin access to the SweetRice dashboard.
+From the admin panel:
+A PHP reverse shell was uploaded
+Remote code execution was achieved as www-data
+The user flag was obtained from /home/itguy/user.txt.
+
+====================:\\\\\\\\\\\
+PRIVILEGE ESCALATION:------------>>
+====================:///////////
+SUID enumeration showed no immediate vectors, but checking sudo permissions revealed:
+sudo -l
+(ALL) NOPASSWD: /usr/bin/perl /home/itguy/backup.pl
+
+The Perl script executed /etc/copy.sh, which was world‑writable.
+By modifying /etc/copy.sh to spawn a reverse shell and executing the script with sudo:
+sudo /usr/bin/perl /home/itguy/backup.pl
+A root shell was obtained, allowing retrieval of the root flag.
+
+=============:\\\\\\\\\\\\\\\\\\\\\
+REPORTING:-------------------------->>
+=============://///////////////////
+This machine was compromised through a chain of common misconfigurations:
+Exposed CMS backup files with plaintext credentials
+Unrestricted file upload leading to RCE
+Misconfigured sudo permissions
+Root‑executed script calling a writable file
+The attack path demonstrated how minor administrative oversights can result in full system compromise.
+
+.............
+ROOM COMPLETE
+.............
