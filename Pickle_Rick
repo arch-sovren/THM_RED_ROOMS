@@ -1,0 +1,152 @@
+1. Introduction
+
+The Pickle Rick room is a beginner-to-intermediate web exploitation challenge inspired by the TV show Rick and Morty. The goal is to compromise a web server, gain command execution, and locate three hidden ingredients across the system.
+
+The attack path involved reconnaissance, service enumeration, directory brute-forcing, credential discovery, and privilege escalation.
+
+2. Reconnaissance
+
+Initial reconnaissance focused on identifying exposed web resources.
+
+Accessing robots.txt revealed an unusual entry:
+Wubbalubbadubdub
+
+
+Inspecting the webpage source revealed a hardcoded username:
+R1ckRul3s
+
+
+These findings strongly suggested credentials were being leaked through basic web reconnaissance.
+
+3. Enumeration
+3.1 Network Scanning
+
+An Nmap scan identified the following open ports and services:
+Port	Service	Version
+22	SSH	OpenSSH 8.2p1 (Ubuntu)
+80	HTTP	Apache 2.4.41
+
+The web server on port 80 was identified as the primary attack surface.
+
+3.2 Web Directory Enumeration
+
+Using Gobuster, several accessible directories and files were discovered:
+/assets/
+/index.html
+/robots.txt
+/server-status (403 Forbidden)
+
+This confirmed that the application relied on classic web directory structures.
+
+3.3 Admin Panel Discovery
+
+Using ffuf with an admin panel wordlist revealed a login page:
+/login.php
+
+
+At this point, the previously discovered username (R1ckRul3s) and the value found in robots.txt were tested as credentials.
+
+Credentials Used:
+Username: R1ckRul3s
+Password: Wubbalubbadubdub
+
+Login was successful.
+
+4. Exploitation
+
+Upon logging in, access was gained to a command execution portal. Directory listing revealed several interesting files:
+Sup3rS3cretPickl3Ingred.txt
+clue.txt
+portal.php
+denied.php
+
+4.1 Command Restrictions Bypass
+
+Attempting to use commands such as cat resulted in the following message:
+Command disabled to make it hard for future PICKLEEEE RICCCKKKK.
+
+
+To bypass this restriction, the strings command was used instead.
+
+5. Ingredient Collection
+5.1 First Ingredient
+
+Using:
+strings Sup3rS3cretPickl3Ingred.txt
+
+Result:
+mr. meeseek hair
+
+
+First ingredient obtained.
+
+Note: Due to a bug in the room, the first ingredient automatically populated the answer fields.
+
+5.2 Second Ingredient
+
+Clue analysis using:
+strings clue.txt
+
+Output:
+Look around the file system for the other ingredient.
+
+
+User context was confirmed:
+whoami
+www-data
+
+
+Further enumeration revealed a file in Rick’s home directory:
+/home/rick/second ingredients
+
+
+Extracting strings from the file revealed:
+jerry tear
+
+
+Second ingredient obtained.
+
+5.3 Privilege Escalation & Third Ingredient
+
+Checking sudo permissions:
+sudo -l
+
+Result:
+(ALL) NOPASSWD: ALL
+
+
+This indicated full root access without a password.
+
+Navigating to the root directory:
+sudo ls /root
+
+Revealed:
+3rd.txt
+
+
+Extracting the contents:
+sudo strings /root/3rd.txt
+
+Result:
+fleeb juice
+
+
+Third ingredient obtained.
+
+6. Conclusion
+
+All three ingredients were successfully retrieved:
+Mr. Meeseek Hair
+Jerry Tear
+Fleeb Juice
+
+The room demonstrated common web exploitation techniques including:
+
+Credential leakage via robots.txt
+Directory brute-forcing
+Command execution under restrictions
+File system enumeration
+Privilege escalation through misconfigured sudo permissions
+Despite a minor room bug that auto-filled answers early, the challenge was completed without walkthroughs and reinforced fundamental penetration testing concepts.
+
+ROOM COMPLETE
