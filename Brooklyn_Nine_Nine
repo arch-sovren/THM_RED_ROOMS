@@ -1,0 +1,109 @@
+Brooklyn Nine Nine
+THM Room
+By Sovren
+
+RECONNAISSANCE
+
+Initial reconnaissance was performed using network scanning to identify open ports, running services, and potential attack vectors.
+
+The target host exposed the following services:
+FTP (21/tcp) running vsftpd 3.0.3
+Anonymous login was enabled.
+A file named note_to_jake.txt was accessible and downloadable.
+FTP connections were unencrypted (plain text).
+SSH (22/tcp) running OpenSSH 7.6p1 on Ubuntu.
+
+Key-based fingerprints were identified, confirming SSH availability for remote access.
+
+HTTP (80/tcp) running Apache httpd 2.4.29 on Ubuntu.
+
+The web server hosted a simple page with no title and minimal visible content.
+
+Operating system fingerprinting suggested a Linux-based system, most likely Ubuntu, though no exact OS match could be confirmed.
+
+ENUMERATION
+
+Further enumeration focused on extracting useful information from the exposed services.
+
+FTP Enumeration
+
+Anonymous FTP access revealed a note addressed to Jake. The note referenced a weak password that needed changing, suggesting poor credential hygiene and the likelihood of password reuse elsewhere on the system.
+
+Web Enumeration
+
+The website hosted an image file. Inspection of the page source revealed hints pointing toward steganography.
+
+The image was downloaded locally.
+
+Initial attempts using steghide failed, indicating corrupted compressed data.
+
+stegseek was used instead, brute-forcing the embedded password with the rockyou.txt wordlist.
+
+The steganographic password was successfully recovered as admin, revealing hidden credentials.
+
+Credential Discovery
+
+The extracted data disclosed SSH credentials:
+Username: holt
+Password: fluffydog12@ninenine
+
+These credentials provided valid SSH access to the system.
+
+EXPLOITATION
+
+Using the discovered credentials, SSH access was obtained as the user holt.
+
+Once logged in, the user flag was quickly located at:
+
+/home/holt/user.txt
+
+This confirmed successful compromise of a low-privileged user account.
+
+PRIVILEGE ESCALATION
+
+Privilege escalation checks were performed using sudo -l.
+
+The output revealed that the user holt could execute the following command as root without providing a password:
+
+/bin/nano
+
+Exploitation Method
+
+Because nano was permitted with sudo privileges, it could be abused to modify sensitive system files.
+
+Steps taken:
+
+A new password hash was generated using OpenSSL:
+Password chosen: 123
+Hashing algorithm: SHA-512
+Nano was launched with elevated privileges:
+/etc/shadow was opened using sudo nano.
+The root user’s password hash was replaced with the newly generated hash.
+The su command was executed, and the new password was entered.
+This resulted in successful escalation to root privileges.
+The root flag was then retrieved from the /root directory.
+
+POST-EXPLOITATION
+
+With root access achieved, full control over the system was confirmed. No persistence mechanisms were implemented, as this was not required for the scope of the challenge.
+
+REPORTING / SUMMARY
+
+This engagement demonstrated multiple common security misconfigurations leading to full system compromise:
+
+Anonymous FTP access exposed sensitive internal information.
+Weak and reused credentials were leveraged to gain SSH access.
+Steganography was used to conceal credentials, but poor password selection made extraction trivial.
+Misconfigured sudo permissions allowed privilege escalation via a permitted text editor.
+
+Attack Path Summary:
+-Network scanning identified FTP, SSH, and HTTP services.
+-Anonymous FTP access revealed a hint toward weak credentials.
+-Steganographic analysis of a web image disclosed SSH credentials.
+-SSH access was obtained as a standard user.
+-Misconfigured sudo permissions allowed modification of /etc/shadow.
+-Root access was achieved, completing the compromise.
+
+Conclusion:
+
+The system was fully compromised due to a combination of weak access controls, credential reuse, and improper sudo configuration. Corrective actions should include disabling anonymous FTP, enforcing strong password policies, auditing sudo permissions, and monitoring for credential exposure.
