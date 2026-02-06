@@ -1,0 +1,113 @@
+CyberHeroes – Penetration Test Report
+
+Platform: TryHackMe
+Room: CyberHeroes
+Author: Sovren
+
+Objective
+
+The objective of this engagement was to assess the security posture of the CyberHeroes web application and identify a method to bypass authentication in order to gain unauthorized access.
+
+=============\\\\\\\\
+RECONNAISSANCE:---->>
+=============:///////
+
+A simple web page containing a login form was identified.
+
+HTML source code review revealed references to static assets.
+
+An image file was observed at the following path:
+
+/assets/img/profile-img.png
+
+The login form input fields were identified with the following IDs:
+
+id="uname"
+
+id="pass"
+
+=============\\\\\\\\\
+ENUMERATION:-------->>
+=============:////////
+Network Scanning (Nmap)
+
+The following open ports and services were identified:
+
+22/tcp – Open
+
+Service: SSH
+
+80/tcp – Open
+
+Service: HTTP
+
+Web Server: Apache httpd 2.4.48 (Ubuntu)
+
+Directory Enumeration (Gobuster)
+Root Directory Enumeration
+gobuster dir -u http://10.80.173.158 -w /usr/share/wordlists/dirb/common.txt
+
+Results:
+
+.hta – 403 Forbidden
+
+.htaccess – 403 Forbidden
+
+.htpasswd – 403 Forbidden
+
+assets/ – 301 Redirect
+
+index.html – 200 OK
+
+server-status – 403 Forbidden
+
+/assets Directory Enumeration
+gobuster dir -u http://10.80.173.158/assets -w /usr/share/wordlists/dirb/common.txt
+
+Results:
+
+css/ – 301 Redirect
+
+img/ – 301 Redirect
+
+js/ – 301 Redirect
+
+vendor/ – 301 Redirect
+
+/assets/img Directory Enumeration
+gobuster dir -u http://10.80.173.158/assets/img -w /usr/share/wordlists/dirb/common.txt
+
+Results:
+
+portfolio/ – 301 Redirect
+
+testimonials/ – 301 Redirect
+
+=============\\\\\\\\\\
+EXPLOITATION:------->>
+=============://///////
+
+Initial exploitation planning involved performing a brute-force attack against the login form using Hydra. However, during manual credential testing, the HTTP response was inspected more closely.
+
+Client-side JavaScript validation logic was discovered within the page source, revealing hardcoded credential checks:
+
+if (a.value == "h3ck3rBoi" & b.value == ReverseString("54321@terceSrepuS"))
+
+Analysis of this logic revealed:
+
+Username: h3ck3rBoi
+
+Password: SuperSecret@12345 (derived by reversing the string)
+
+Submitting these credentials successfully authenticated the session and returned the following message:
+
+"Congrats Hacker, you made it !! Go ahead and nail other challenges as well :D"
+
+Flag obtained:
+
+flag{edb0be532c540b1a150c3a7e85d2466e}
+Notes & Observations
+
+Conclusion
+
+Authentication was successfully bypassed due to insecure client-side credential validation and hardcoded credentials embedded in JavaScript. This represents a critical security flaw, as sensitive authentication logic should never be exposed or enforced on the client side.
