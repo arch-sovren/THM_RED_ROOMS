@@ -1,0 +1,57 @@
+Intermediate Nmap
+THM Room
+Author: Sovren
+
+Objective:
+
+The objective of this room was to apply intermediate Nmap scanning techniques in combination with service enumeration and protocol analysis to gain access to a target machine and retrieve the flag. The challenge required identifying an exposed high-numbered port that leaked credentials, which could then be used to authenticate to a standard remote access service.
+
+Target IP: 10.82.185.59
+
+Enumeration:
+
+A full TCP port scan was conducted using Nmap with default scripts, version detection, OS detection, and aggressive timing to identify all exposed services:
+
+sudo nmap -sC -sV --version-intensity 5 -O --osscan-guess -T4 -Pn 10.82.185.59 -p-
+Scan Results
+Port	State	Service	Version
+22	Open	SSH	OpenSSH 8.2p1 (Ubuntu)
+2222	Open	SSH	OpenSSH 8.2p1 (Ubuntu)
+31337	Open	Unknown	Custom / Unrecognized
+
+The operating system was identified as Linux (kernel versions 4.15–5.19). Network distance was approximately three hops.
+
+Service Analysis
+SSH Services (Ports 22 and 2222)
+
+Two SSH services were discovered running on ports 22 and 2222. At this stage, no credentials were known, so further enumeration was required before attempting authentication.
+
+High Port Service (31337)
+
+Port 31337 was identified as an unrecognized service. Nmap’s service fingerprinting revealed that the port returned the same response across multiple probes. The banner contained the following message:
+
+In case I forget - user:pass
+ubuntu:Dafdas!!/str0ng
+
+This indicated a clear case of credential leakage via a custom or misconfigured service. Although a direct connection to the port was unreliable, the banner information was consistently retrieved through Nmap scanning.
+
+Exploitation:
+
+Based on the leaked credentials, an SSH login attempt was made using the discovered username and password:
+
+ssh ubuntu@10.82.185.59
+
+Password: Dafdas!!/str0ng
+
+The authentication was successful, granting access to the system.
+
+Post-Exploitation:
+
+After logging in, the user’s home directory was inspected. The flag was located at the following path:
+
+/home/user/flag.txt
+
+Conclusion:
+
+This room demonstrated the importance of thorough service enumeration and attention to non-standard ports. By combining Nmap scanning with banner analysis, leaked credentials were identified and successfully reused to gain SSH access. The challenge reinforced how misconfigured services and exposed information can lead directly to system compromise, even without exploiting software vulnerabilities.
+
