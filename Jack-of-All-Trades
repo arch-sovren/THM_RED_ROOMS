@@ -1,5 +1,5 @@
 =============:\\\\\\\\
-RECONAISSANCE:-------->>
+RECONAISSANCE:--------->>
 =============:////////
 
 Initial reconnaissance of the target website resulted in the connection being reset. Manual browsing attempts failed, indicating that
@@ -39,7 +39,7 @@ This password became relevant later during steganographic analysis.
 
 
 
-=============:\\\\\
+=============:\\\\\\\\\\
 ENUMERATION:------------->>
 =============://////////
 
@@ -119,7 +119,7 @@ index.php?cmd=ls -a
 
 Source code analysis of index.php confirmed unsanitized command execution gated only by a static cookie value.
 
-=============:\\\\\\
+=============:\\\\\\\\\\\\
 EXPLOITATION:--------------->>
 =============:////////////
 
@@ -149,7 +149,7 @@ The file was downloaded via wget, and the flag was extracted from the image.
 #It is worth noting that full compromise was also possible without a reverse shell; however,
 command output formatting made the reverse shell approach faster and more efficient.
 
-====================:\\\\
+====================:\\\\\\\
 PRIVILEGE ESCALATION:-------->>>
 ====================:///////
 
@@ -169,13 +169,13 @@ securi-tay2020_{6f125d32f38fb8ff9e720d2dbce2210a}
 
 This completed privilege escalation and full system compromise.
 
-=============:\\\\\\\\\
+=============:\\\\\\\\\\\\\\\\\
 POST-EXPLOITATION:-------------->>
 =============://///////////////
 
 All intended flags were successfully retrieved. No persistence mechanisms were deployed.
 
-=============:\\\\\\\\\\\
+=============:\\\\\\\\\\\\\\\\\\\\\
 REPORTING:-------------------------->>
 =============://///////////////////
 
