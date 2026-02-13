@@ -4,11 +4,6 @@ By Sovren
 Can you gain access to this gaming server built by amateurs with no experience of web development and take advantage of the deployment system.
 
 
-Notes:
-ssh access was gained via the private key but we don't have john's password.
-we need his password to find sudo permissions
-
-
 # Reconnaissance
 
 The site is called House of danak
@@ -152,6 +147,9 @@ We have access to the shell thanks for the private key, but we don't know john's
 
 # Privilege Escalation
 
+sudo -l
+we were unable to find john's sudo permissions due to not having his password. 
+
 #### SUID Files
 - /bin/mount
 - /bin/umount
@@ -215,7 +213,7 @@ No custom jobs to exploit
 `uid=1000(john) gid=1000(john) groups=1000(john),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),108(lxd)`
 
 108 (lxd) 
-Being part of the lxd group allows the potential to break out as root
+Being part of the lxd group allows for the potential to break out as root. See the LXD exploit steps below.
 
 
 ### LXD Exploit
