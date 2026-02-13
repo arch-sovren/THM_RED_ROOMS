@@ -222,6 +222,7 @@ Being part of the lxd group allows the potential to break out as root
 ---
 
 References:
+
 https://www[.]exploit-db.com/exploits/46978
 
 https://github[.]com/saghul/lxd-alpine-builder
