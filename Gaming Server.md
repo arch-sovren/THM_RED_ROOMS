@@ -3,6 +3,17 @@ By Sovren
 
 Can you gain access to this gaming server built by amateurs with no experience of web development and take advantage of the deployment system.
 
+## REPORT:
+# Executive Summary
+
+This penetration test assessed the security of the House of Danak gaming server, a Linux-based system developed and deployed without established secure development or hardening practices. The objective of the engagement was to identify exploitable weaknesses that could allow an attacker to gain unauthorized access and escalate privileges.
+
+The assessment identified several critical security flaws that enabled a full system compromise. Publicly accessible web directories exposed sensitive information, including an encrypted SSH private key and a password wordlist. The private key was protected with a weak passphrase, allowing it to be cracked using readily available tools. This led to successful remote access to the server as a legitimate user.
+
+Once authenticated, insufficient privilege separation and improper group membership controls allowed further escalation. The compromised user was a member of the lxd administrative group, which enabled abuse of container functionality to mount the host filesystem and obtain root-level access to the server.
+
+Overall, the system was found to be highly vulnerable to attack due to poor credential management, insecure file exposure, and misconfigured user privileges. An external attacker with minimal effort and no prior knowledge could achieve complete control of the server. Immediate remediation is strongly recommended, including removal of sensitive files from web access, enforcement of strong key protection, and strict adherence to the principle of least privilege.
+
 
 # Reconnaissance
 
