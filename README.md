@@ -1,9 +1,9 @@
--Overview
+# Overview
 
 This repository contains penetration testing reports and walkthrough-style notes created for Easy rooms completed on the TryHackMe (THM) platform.
 The purpose of this repository is to document my learning process, demonstrate foundational offensive security skills, and serve as part of my cybersecurity portfolio.
 
-The reports focus on:
+# The reports focus on:
 
 Reconnaissance and enumeration methodology
 
@@ -13,12 +13,12 @@ Privilege escalation techniques
 
 Clear documentation of attack paths and findings
 
--Purpose of This Repository
+# Purpose of This Repository
 
 These reports are not copy-paste walkthroughs.
 They are written as structured notes intended to simulate real-world pentest documentation.
 
-This repository exists to help me:
+## This repository exists to help me:
 
 Develop a consistent penetration testing methodology
 
