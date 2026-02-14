@@ -1,6 +1,6 @@
-A THM Room 
-By Sovren
-Part of the Love at First Breach 2026 Event
+# A THM Room 
+# By Sovren
+# Part of the Love at First Breach 2026 Event
 
 
 My Dearest Hacker,
