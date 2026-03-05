@@ -69,13 +69,7 @@ Operating system fingerprinting indicated a Linux-based system (Ubuntu kernel 4.
 # Exploitation
 ##### Logon Page
 
-![[smag_grotto-1.png]]
-
-Using the credentials obtained from the packet capture:
-
-![[smag_grotto-2.png]]
-
-Authentication was successful.
+Using the credentials obtained from the packet capture, authentication to the admin.php page was successful. 
 
 The application contained a command execution interface. Although command output was not displayed in the web interface, outbound connections confirmed that commands were being executed on the server.
 
