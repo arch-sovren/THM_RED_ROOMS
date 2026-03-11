@@ -98,7 +98,7 @@ The vulnerability was tested using the Metasploit module:
 
 The exploit successfully retrieved sensitive information from the server, including credentials required to access the system.
 
-![[ghostcat1.png]]
+<img width="628" height="499" alt="ghostcat1" src="https://github.com/user-attachments/assets/3f6b7d75-a635-4323-b3ab-1a13ff3054e1" />
 
 
 # Post-Exploitation
