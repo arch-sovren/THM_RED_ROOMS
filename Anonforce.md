@@ -240,6 +240,7 @@ And root-level access was successfully achieved.
 
     **Recommendation:** Enforce strong password policies, disable root SSH login, and use key-based authentication.
 
+
 ## Conclusion
 
 The system was critically vulnerable due to multiple misconfigurations and weak security practices. The combination of anonymous FTP access, exposed sensitive files, weak encryption, and poor password hygiene allowed full system compromise.
