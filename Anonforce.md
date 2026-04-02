@@ -188,7 +188,7 @@ $607nYFaYfF4VMaegmz7dKjsTukBLh6cP01iMmL7CiQDt1ycIm6a.bsOIBp0DwXVb9XI2EtULXJzBtaM
 
 **melodias:**
 ```
-1xDhc6S6G$IQHUW5ZtMkBQ5pUMjEQtL1
+1xDhc6S6G$IQHUW5ZtMkBQ5pUMjEQtL1:18120:0:99999:7:::
 ```
 
 The `/etc/shadow` entry below was pasted into a .txt file:
