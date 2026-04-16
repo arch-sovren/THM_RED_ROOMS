@@ -33,7 +33,7 @@ A `ghostcat` exploit was successfully performed, but no meaningful sensitive fil
 - The default Apache Tomcat landing page was accessible.
 - Further inspection using intercepting proxy tools (Burp Suite Repeater) revealed exposed credentials:
 
-![[thompson_1.png]]
+<img width="1716" height="995" alt="thompson_1" src="https://github.com/user-attachments/assets/73e56a32-542a-4e05-a54b-d5b359d8021a" />
 
 `tomcat:s3cret`
 
@@ -47,7 +47,7 @@ The authenticated Tomcat Manager was exploited with a Metasploit module:
 
 This module allowed deployment of a malicious WAR file, resulting in a reverse shell on the target system.
 
-![[thompson_2.png]]
+<img width="1854" height="930" alt="thompson_2" src="https://github.com/user-attachments/assets/16dd9f3b-b694-4192-bb7b-0b79e3046983" />
 
 The first flag can be found in `/home/jack/user.txt` 
 
